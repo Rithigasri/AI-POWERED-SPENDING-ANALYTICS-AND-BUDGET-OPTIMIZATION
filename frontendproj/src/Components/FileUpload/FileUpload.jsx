@@ -55,7 +55,7 @@ const FileUpload = () => {
 
   return (
     <div className="file-upload-container">
-      <h2>Upload Monthly Statement</h2>
+      <h1>Upload Monthly Statement</h1>
       <form className="file-upload-form" onSubmit={handleSubmit}>
         <input type="file" className="file-input" onChange={handleFileChange} />
         <div className="file-upload-group">

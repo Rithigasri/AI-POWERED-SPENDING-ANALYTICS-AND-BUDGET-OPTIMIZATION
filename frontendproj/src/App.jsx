@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import FileUpload from "./Components/FileUpload/FileUpload";
 import CategorizeTransaction from "./Components/CategorizeTransaction/CategorizeTransaction";
+import SavingsVsExpenses from "./Components/SavingsVsExpenses/SavingsVsExpenses";
+import Chatbot from "./Components/Chatbot/Chatbot";
 import "./App.css";
 
 const App = () => {
@@ -21,6 +23,12 @@ const App = () => {
       </div>
       <div className="content">
         <CategorizeTransaction />
+      </div>
+      <div className="content">
+        <SavingsVsExpenses/>
+      </div>
+      <div className="content">
+        <Chatbot/>
       </div>
     </div>
   );
