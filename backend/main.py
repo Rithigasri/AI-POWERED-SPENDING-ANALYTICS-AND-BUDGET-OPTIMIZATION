@@ -313,3 +313,145 @@ async def chat_with_genie(query: str = Form(...)):
     
     response = ask_gemini(query, file_path)
     return {"response": response}
+
+
+##NEW ENDPOINTS
+# Azure Form Recognizer configuration
+
+FORM_RECOGNIZER_ENDPOINT = os.getenv("AZURE_ENDPOINT")
+FORM_RECOGNIZER_API_KEY = os.getenv("AZURE_API_KEY")
+FORM_RECOGNIZER_MODEL_URL = FORM_RECOGNIZER_ENDPOINT + "formrecognizer/documentModels/prebuilt-receipt:analyze?api-version=2023-07-31"
+
+
+
+# Headers for API Requests
+FORM_HEADERS = {"Ocp-Apim-Subscription-Key": FORM_RECOGNIZER_API_KEY, "Content-Type": "application/pdf"}
+OPENAI_HEADERS = {"Content-Type": "application/json", "api-key": AZURE_API_KEY}
+
+# Upload folder for receipts
+UPLOAD_RECEIPTS_FOLDER = "uploaded_receipts"
+
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_RECEIPTS_FOLDER, exist_ok=True)
+
+# Function to Extract Data from Receipt PDF
+def extract_receipt_data(file_path):
+    """Uploads a receipt PDF and extracts date, brand, and total cost using Azure Form Recognizer."""
+    with open(file_path, "rb") as f:
+        response = requests.post(FORM_RECOGNIZER_MODEL_URL, headers=FORM_HEADERS, data=f)
+    
+    if response.status_code != 202:
+        print(f"⚠️ Error: {response.text}")
+        return None
+
+    operation_url = response.headers["Operation-Location"]
+
+    # Polling until processing is complete
+    while True:
+        result_response = requests.get(operation_url, headers={"Ocp-Apim-Subscription-Key": FORM_RECOGNIZER_API_KEY})
+        result_json = result_response.json()
+        
+        if result_json["status"] == "succeeded":
+            break
+        elif result_json["status"] == "failed":
+            print("⚠️ Error: Document processing failed.")
+            return None
+        time.sleep(5)
+
+    documents = result_json.get("analyzeResult", {}).get("documents", [])
+    if not documents:
+        print("⚠️ No valid data extracted.")
+        return None
+
+    fields = documents[0].get("fields", {})
+
+    # Debugging: print the fields extracted
+    print("Extracted Fields:", fields)
+
+    # Handle missing data gracefully
+    return {
+        "date": fields.get("TransactionDate", {}).get("content", "N/A"),
+        "brand": fields.get("MerchantName", {}).get("content", "Unknown"),  # Handle missing brand
+        "total_cost": fields.get("Total", {}).get("content", "Unknown")  # Handle missing total cost
+    }
+
+# Function to Classify Transactions Using Azure OpenAI GPT-4
+def classify_transaction(brand, total_cost):
+    """Classifies a transaction using Azure OpenAI GPT-4."""
+    narration = f"{brand} {total_cost}"
+
+    prompt = (
+        f"Analyze and classify this financial transaction: '{narration}'.\n"
+        "Forcefully categorize it into one of the following categories:\n"
+        "- **Groceries** (supermarkets, grocery stores, food-related transactions)\n"
+        "- **Shopping** (e-commerce, retail, fashion, online purchases)\n"
+        "- **Personal Transfers** (sending/receiving money from individuals)\n"
+        "- **EMI & Loans** (monthly installments, chit fund payments, loan repayments)\n"
+        "- **Travel & Transport** (metro, fuel, tickets, ride-sharing)\n"
+        "- **Bill Payments** (electricity, mobile recharge, Paytm, Google Pay, UPI bills)\n"
+        "- **Cash Transactions** (ATM withdrawals, debit/credit card purchases)\n"
+        "- **Rewards & Cashback** (Google rewards, refunded money, cashback)\n"
+        "- **Business** (Trading, Export, Import, Product Purchase)\n"
+        "If you are unsure, pick the closest category instead of 'Uncategorized'.\n"
+        "Return **only** the category name, nothing else."
+    )
+
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a financial transaction classifier."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.5,
+        "max_tokens": 50
+    }
+
+    url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_DEPLOYMENT_NAME}/chat/completions?api-version=2024-02-01"
+
+    try:
+        response = requests.post(url, headers=OPENAI_HEADERS, json=payload)
+        if response.status_code == 200:
+            result = response.json()
+            category = result["choices"][0]["message"]["content"].strip()
+            return category if category else "Uncategorized"
+        else:
+            print(f"⚠️ Unexpected response status: {response.status_code}")
+            return "Uncategorized"
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ API Request Failed: {e}")
+        return "Uncategorized"
+
+# Endpoint for handling receipt PDF uploads and classification
+@app.post("/upload_receipt/")
+async def upload_receipt(file: UploadFile = File(...)):
+    """Handles receipt PDF upload, extracts details, and classifies the transaction."""
+    if not file:
+        raise HTTPException(status_code=400, detail="Please select a file.")
+
+    # Save the uploaded receipt PDF
+    file_location = os.path.join(UPLOAD_RECEIPTS_FOLDER, file.filename)
+    with open(file_location, "wb") as f:
+        f.write(file.file.read())
+    
+    # Extract data from receipt using Azure Form Recognizer
+    receipt_data = extract_receipt_data(file_location)
+    if not receipt_data:
+        raise HTTPException(status_code=400, detail="Failed to extract data from receipt.")
+    
+    # Extracted data from receipt (brand, total cost, and date)
+    date = receipt_data.get("date", "N/A")
+    brand = receipt_data.get("brand", "N/A")
+    total_cost = receipt_data.get("total_cost", "N/A")
+    
+    if brand == "N/A" or total_cost == "N/A":
+        raise HTTPException(status_code=400, detail="Incomplete receipt data.")
+    
+    # Classify the transaction using Azure OpenAI GPT-4
+    category = classify_transaction(brand, total_cost)
+    
+    # Return a structured and complete response including the date
+    return {
+        "date": date,  # Date of transaction
+        "brand": brand,  # Brand of the service
+        "total_cost": total_cost,  # Total cost of the transaction
+        "category": category  # Classified category of the transaction
+    }
