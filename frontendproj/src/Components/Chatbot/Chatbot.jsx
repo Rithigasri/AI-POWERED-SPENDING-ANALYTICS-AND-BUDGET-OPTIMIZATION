@@ -76,7 +76,7 @@ return (
                     placeholder="Ask Genie..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    slotProps={{ input: { style: { color: 'white' } } }}
+                    slotProps={{ input: { style: { color: 'white', height: '40px' } } }}
                 />
                 <Button className="button" onClick={sendQuery} disabled={loading} style={{ backgroundColor: 'red', color: 'white', margin: '20px' }}>
                     {loading ? "Loading..." : "Ask Genie"}
