@@ -5,6 +5,7 @@ import SavingsVsExpenses from "./Components/SavingsVsExpenses/SavingsVsExpenses"
 import Chatbot from "./Components/Chatbot/Chatbot";
 import "./App.css";
 import OCRFunction from "./Components/OCRFunction/OCRFunction";
+import InsightProvider from "./Components/InsightProvider/InsightProvider";
 
 const App = () => {
   const [fileData, setFileData] = useState(null);
@@ -33,6 +34,9 @@ const App = () => {
       </div>
       <div className="content">
         <OCRFunction/>
+      </div>
+      <div className="content">
+        <InsightProvider/>
       </div>
     </div>
   );

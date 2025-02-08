@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form , Query
 from fastapi.middleware.cors import CORSMiddleware
 from azure.ai.formrecognizer import DocumentAnalysisClient
 from azure.core.credentials import AzureKeyCredential
@@ -9,10 +9,14 @@ import json
 import requests
 import re
 import time
+from datetime import datetime
 from dotenv import load_dotenv
 import pandas as pd
 from pydantic import BaseModel
 from fastapi.responses import JSONResponse
+from typing import Dict
+import glob
+
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -93,7 +97,8 @@ def classify_transaction(narration, max_retries=3, retry_delay=20):
         "- **Cash Transactions** (ATM withdrawals, debit/credit card purchases)\n"
         "- **Rewards & Cashback** (Google rewards, refunded money, cashback)\n"
         "If you are unsure, pick the closest category instead of 'Uncategorized'.\n"
-        "Return **only** the category name, nothing else."
+        "Return **only** the category name with no ** symbols, nothing else."
+        
     )
     payload = {
         "messages": [{"role": "system", "content": "You are a financial transaction classifier."},
@@ -334,7 +339,22 @@ UPLOAD_RECEIPTS_FOLDER = "uploaded_receipts"
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_RECEIPTS_FOLDER, exist_ok=True)
 
-# Function to Extract Data from Receipt PDF
+def clean_and_convert_balance(balance_str):
+    """Cleans the balance string and converts it to float."""
+    balance_str = balance_str.replace(',', '').strip()  # Remove commas and spaces
+    balance_str = balance_str.replace('₹', '').strip()  # Remove the ₹ symbol
+    # Check if the balance_str is not empty before attempting conversion
+    if balance_str:
+        try:
+            return float(balance_str)
+        except ValueError:
+            print(f"⚠️ Error: Invalid value '{balance_str}' for conversion.")
+            return 0.0  # Return 0.0 if conversion fails
+    else:
+        return 0.0  # Return 0.0 if the string is empty
+
+    
+# Function to extract receipt data using Azure Form Recognizer
 def extract_receipt_data(file_path):
     """Uploads a receipt PDF and extracts date, brand, and total cost using Azure Form Recognizer."""
     with open(file_path, "rb") as f:
@@ -375,8 +395,8 @@ def extract_receipt_data(file_path):
         "total_cost": fields.get("Total", {}).get("content", "Unknown")  # Handle missing total cost
     }
 
-# Function to Classify Transactions Using Azure OpenAI GPT-4
-def classify_transaction(brand, total_cost):
+# Function to classify the transaction using Azure OpenAI GPT-4
+def classify_transaction_ocr(brand, total_cost):
     """Classifies a transaction using Azure OpenAI GPT-4."""
     narration = f"{brand} {total_cost}"
 
@@ -393,7 +413,7 @@ def classify_transaction(brand, total_cost):
         "- **Rewards & Cashback** (Google rewards, refunded money, cashback)\n"
         "- **Business** (Trading, Export, Import, Product Purchase)\n"
         "If you are unsure, pick the closest category instead of 'Uncategorized'.\n"
-        "Return **only** the category name, nothing else."
+        "Return **only** the category name with no ** symbols, nothing else."
     )
 
     payload = {
@@ -411,8 +431,8 @@ def classify_transaction(brand, total_cost):
         response = requests.post(url, headers=OPENAI_HEADERS, json=payload)
         if response.status_code == 200:
             result = response.json()
-            category = result["choices"][0]["message"]["content"].strip()
-            return category if category else "Uncategorized"
+            category_ocr = result["choices"][0]["message"]["content"].strip()
+            return category_ocr if category_ocr else "Uncategorized"
         else:
             print(f"⚠️ Unexpected response status: {response.status_code}")
             return "Uncategorized"
@@ -422,7 +442,7 @@ def classify_transaction(brand, total_cost):
 
 # Endpoint for handling receipt PDF uploads and classification
 @app.post("/upload_receipt/")
-async def upload_receipt(file: UploadFile = File(...)):
+async def upload_receipt(file: UploadFile = File(...), transactionType: str = Form(...)):
     """Handles receipt PDF upload, extracts details, and classifies the transaction."""
     if not file:
         raise HTTPException(status_code=400, detail="Please select a file.")
@@ -445,13 +465,173 @@ async def upload_receipt(file: UploadFile = File(...)):
     if brand == "N/A" or total_cost == "N/A":
         raise HTTPException(status_code=400, detail="Incomplete receipt data.")
     
+    # Clean and convert the total_cost to a float
+    total_cost_float = clean_and_convert_balance(total_cost)
+    
     # Classify the transaction using Azure OpenAI GPT-4
-    category = classify_transaction(brand, total_cost)
+    category_ocr = classify_transaction_ocr(brand, total_cost)
+    
+    # Get the transaction type (received or paid)
+    if transactionType not in ["received", "paid"]:
+        raise HTTPException(status_code=400, detail="Invalid transaction type.")
+    
+    # Determine withdrawal or deposit
+    withdrawal_amt = total_cost_float if transactionType == "paid" else 0
+    deposit_amt = total_cost_float if transactionType == "received" else 0
+
+    # Update CSV file with the transaction
+    update_csv_with_transaction(receipt_data, withdrawal_amt, deposit_amt, category_ocr)
     
     # Return a structured and complete response including the date
     return {
         "date": date,  # Date of transaction
         "brand": brand,  # Brand of the service
         "total_cost": total_cost,  # Total cost of the transaction
-        "category": category  # Classified category of the transaction
+        "category": category_ocr,  # Classified category of the transaction
+        "transaction_type": transactionType  # Added transaction type to response
     }
+
+def update_csv_with_transaction(transaction_data, withdrawal_amt, deposit_amt, category_ocr):
+    """Adds a new transaction to the CSV file and updates closing balance."""
+    # Locate the CSV file in 'uploads' folder (month-year.csv format)
+    # Convert '20-Jan-25' to '19/01/25' format
+    formatted_date = datetime.strptime(transaction_data['date'], "%d-%b-%y").strftime("%d/%m/%y")
+
+    # Extract month-year for CSV filename (January-2025)
+    month_year = datetime.strptime(transaction_data['date'], "%d-%b-%y").strftime("%B-%Y").lower()
+
+    csv_file_path = f"uploads/{month_year}.csv"
+    
+    # Check if the CSV exists, otherwise create it
+    if not os.path.exists(csv_file_path):
+        print(f"⚠️ No matching CSV found for {month_year}. Creating a new one.")
+        df = pd.DataFrame(columns=["Date", "Narration", "Withdrawal Amt.", "Deposit Amt.", "Closing Balance", "Category"])
+    else:
+        df = pd.read_csv(csv_file_path)
+    
+    # Get the last closing balance or start from 0
+    closing_balance = clean_and_convert_balance(df.iloc[-1]["Closing Balance"]) if not df.empty else 0.0
+    new_closing_balance = closing_balance - withdrawal_amt + deposit_amt
+    
+    # Prepare the new transaction row
+    new_transaction = {
+        "Date": formatted_date,
+        "Narration": transaction_data['brand'],
+        "Withdrawal Amt.": withdrawal_amt,
+        "Deposit Amt.": deposit_amt,
+        "Closing Balance": new_closing_balance,
+        "Category": category_ocr  # Use the category from upload_receipt function
+    }
+
+    # Append the new transaction row to the DataFrame
+    new_transaction_df = pd.DataFrame([new_transaction])
+    df = pd.concat([df, new_transaction_df], ignore_index=True)
+
+    # Save the updated CSV file
+    df.to_csv(csv_file_path, index=False)
+    print("✅ Transaction added successfully!")
+   
+
+# Insights Provider
+def load_past_statements():
+    """Load all CSV files from the uploads folder and combine them into a single DataFrame."""
+    csv_files = glob.glob(os.path.join(UPLOAD_FOLDER, "*.csv"))
+    dataframes = []
+    
+    for file in csv_files:
+        if os.path.getsize(file) > 0:
+            df = pd.read_csv(file, dtype=str)
+            df["Withdrawal Amt."] = df["Withdrawal Amt."].str.replace(",", "").astype(float, errors='ignore')
+            df["Deposit Amt."] = df["Deposit Amt."].str.replace(",", "").astype(float, errors='ignore')
+            dataframes.append(df)
+    
+    return pd.concat(dataframes, ignore_index=True) if dataframes else pd.DataFrame()
+
+def analyze_spending_saving(data: pd.DataFrame, spending_pct: float, saving_pct: float) -> Dict:
+    """Analyze spending trends and provide insights."""
+    if data.empty:
+        return {"message": "No data available for analysis."}
+    
+    total_spent = data["Withdrawal Amt."].sum()
+    total_saved = data["Deposit Amt."].sum() - total_spent
+    expected_spent = (spending_pct / 100) * (total_spent + total_saved)
+    expected_saved = (saving_pct / 100) * (total_spent + total_saved)
+    
+    # Identify max spending areas
+    category_spending = data.groupby("Category")["Withdrawal Amt."].sum().sort_values(ascending=False)
+    max_spent_category = category_spending.idxmax() if not category_spending.empty else "No spending data"
+    
+    insights = {
+        "total_spent": total_spent,
+        "total_saved": total_saved,
+        "expected_spent": expected_spent,
+        "expected_saved": expected_saved,
+        "deviation_spent": total_spent - expected_spent,
+        "deviation_saved": total_saved - expected_saved,
+        "max_spent_category": max_spent_category,
+        "suggestions": []
+    }
+    
+    # Provide suggestions
+    if total_spent > expected_spent:
+        insights["suggestions"].append(f"Reduce spending in {max_spent_category}.")
+    if total_saved < expected_saved:
+        insights["suggestions"].append("Increase savings by cutting unnecessary expenses.")
+    # Generate AI recommendations using Gemini or Azure service
+    prompt = (
+        f"Based on the following financial insights:\n"
+        f"Total Spent: {total_spent}\n"
+        f"Total Saved: {total_saved}\n"
+        f"Expected Spent: {expected_spent}\n"
+        f"Expected Saved: {expected_saved}\n"
+        f"Deviation Spent: {total_spent - expected_spent}\n"
+        f"Deviation Saved: {total_saved - expected_saved}\n"
+        f"Max Spent Category: {max_spent_category}\n"
+        f"Suggestions: {insights['suggestions']}\n"
+        f"Provide additional recommendations to improve financial health, in 3 short points and avoid ** symbols while returning back, please. "
+    )
+
+    payload = {
+        "messages": [
+            {"role": "system", "content": "You are a financial advisor."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.5,
+        "max_tokens": 150
+    }
+
+    url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_DEPLOYMENT_NAME}/chat/completions?api-version=2024-02-01"
+
+    try:
+        response = requests.post(url, headers=HEADERS, json=payload)
+        if response.status_code == 200:
+            result = response.json()
+            ai_recommendations = result["choices"][0]["message"]["content"].strip()
+            insights["ai_recommendations"] = ai_recommendations
+        else:
+            insights["ai_recommendations"] = "Failed to generate AI recommendations."
+    except requests.exceptions.RequestException as e:
+        insights["ai_recommendations"] = f"API Request Failed: {e}"
+        ai_recommendations = insights.get("ai_recommendations", "No recommendations available")
+        logging.info(f"AI Recommendations: {ai_recommendations}")
+    return {
+        "total_spent": insights["total_spent"],
+        "total_saved": insights["total_saved"],
+        "expected_spent": insights["expected_spent"],
+        "expected_saved": insights["expected_saved"],
+        "deviation_spent": insights["deviation_spent"],
+        "deviation_saved": insights["deviation_saved"],
+        "max_spent_category": insights["max_spent_category"],
+        "suggestions": insights["suggestions"],
+        "ai_recommendations": insights["ai_recommendations"]
+    }
+
+@app.get("/analyze")
+def get_savings_analysis(spending_pct: float = Query(..., ge=0, le=100), saving_pct: float = Query(..., ge=0, le=100)):
+    """API endpoint to analyze savings based on user-defined percentages."""
+    if spending_pct + saving_pct != 100:
+        return {"error": "Spending and saving percentages must sum to 100."}
+    
+    data = load_past_statements()
+    insights = analyze_spending_saving(data, spending_pct, saving_pct)
+    return insights
