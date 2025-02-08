@@ -34,13 +34,12 @@ const months = [
     "July", "August", "September", "October", "November", "December"
 ];
 
-const currentYear = new Date().getFullYear();
-const years = Array.from({ length: 21 }, (_, i) => (currentYear - 10 + i).toString());
+const years = Array.from({ length: 50 }, (_, i) => (new Date().getFullYear() - i).toString());
 
 return (
     <div className="chatbot-container">
         <h1>Hi, I'm Genie, Your Personal Finance Advisor</h1>
-        <Card>
+        <Card style={{ backgroundColor: '#2d3748' }}>
             <CardContent className="card-content">
                 <div className="grid-container">
                     <Select
@@ -48,6 +47,7 @@ return (
                         value={month}
                         onChange={(e) => setMonth(e.target.value)}
                         displayEmpty
+                        style={{ color: 'white' }}
                     >
                         <MenuItem value="" disabled>
                             Month
@@ -61,6 +61,7 @@ return (
                         value={year}
                         onChange={(e) => setYear(e.target.value)}
                         displayEmpty
+                        style={{ color: 'white' }}
                     >
                         <MenuItem value="" disabled>
                             Year
@@ -70,18 +71,19 @@ return (
                         ))}
                     </Select>
                 </div>
-                <TextField
+                <TextField 
                     className="text-field"
                     placeholder="Ask Genie..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
+                    slotProps={{ input: { style: { color: 'white' } } }}
                 />
                 <Button className="button" onClick={sendQuery} disabled={loading} style={{ backgroundColor: 'red', color: 'white', margin: '20px' }}>
                     {loading ? "Loading..." : "Ask Genie"}
                 </Button>
                 <div className="messages-container">
                     {messages.map((msg, index) => (
-                        <div key={index} className={`message ${msg.role}`}>
+                        <div key={index} className={`message ${msg.role}`} style={{ color: 'white' }}>
                             {msg.text}
                         </div>
                     ))}

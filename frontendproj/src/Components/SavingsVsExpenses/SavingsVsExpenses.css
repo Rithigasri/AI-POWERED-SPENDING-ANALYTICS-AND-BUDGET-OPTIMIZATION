@@ -1,0 +1,61 @@
+/* SavingsVsExpensechart.css */
+
+.categorize-transaction-container {
+    background-color: #2d3748;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  
+  .categorize-transaction-container h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #90cdf4;
+  }
+  
+  .dropdown-container {
+    margin-bottom: 15px;
+  }
+  
+  .dropdown-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #a0aec0;
+  }
+  
+  .dropdown-select {
+    width: 100%;
+    padding: 8px;
+    background-color: #4a5568;
+    border: 1px solid #718096;
+    border-radius: 4px;
+    color: #e2e8f0;
+  }
+  
+  .upload-transaction-button {
+    background-color: #3182ce;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .upload-transaction-button:hover {
+    background-color: #2c5282;
+  }
+  
+  .message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #4a5568;
+    color: #e2e8f0;
+  }
+  
+  /* Styles for Plotly chart container */
+  .js-plotly-plot {
+    margin-top: 20px;
+  }
+  
+  

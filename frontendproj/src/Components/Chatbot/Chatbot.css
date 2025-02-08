@@ -1,72 +1,98 @@
+/* Chatbot.css */
+
 .chatbot-container {
-    padding: 2rem;
-    margin: 0 auto;
-    background-color: #1e1e1e;
-    color: #ffffff;
-    border-radius: 8px;
-    width: 50%;
+  background-color: #2d3748;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
-  
+
+.chatbot-container h1 {
+  font-size: 20px;
+  margin-bottom: 20px;
+  color: #90cdf4;
+}
+
 .card-content {
-    padding: 2rem;
-    gap: 1rem;
-    background-color: white;
-    border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
-  
+
 .grid-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
 }
-  
-.text-field, .dropdown {
-    width: 100%;
-    background-color: #ffffff;
-    color: #000000;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem;
-    margin-bottom: 1rem;
+
+.dropdown {
+  width: 100%;
+  padding: 2px;
+  background-color: #4a5568;
+  border: 1px solid #718096;
+  border-radius: 4px;
+  color: #e2e8f0;
+  height: 40px; /* Decreased height */
 }
-  
-.text-field::placeholder {
-    color: #b0b0b0;
+
+.text-field {
+  width: 100%;
+  padding: 2px;
+  background-color: #4a5568;
+  border: 1px solid #718096;
+  border-radius: 4px;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+   /* Decreased height */
 }
-  
+
 .button {
-    width: 20%;
-    background-color: red;
-    border: none;
-    border-radius: 4px;
-    padding: 1.5rem;
-    cursor: pointer;
-    font-size: 1.2rem;
-    margin-top: 1rem;
-}
+  background-color: #e53e3e;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s;
   
+}
+
+.button:hover {
+  background-color: #c53030;
+}
+
 .button:disabled {
-    background-color: #6e6e6e;
+  background-color: #718096;
+  cursor: not-allowed;
 }
-  
+
 .messages-container {
-    gap: 0.5rem;
-    max-height: 20rem;
-    overflow: auto;
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #4a5568;
+  border-radius: 4px;
 }
-  
+
 .message {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  max-width: 100%;
 }
-  
+
 .message.user {
-    background-color: rgb(68, 68, 68);
-    color: white;
-}
+  background-color: #3182ce;
+  align-self: flex-end;
   
-.message.bot {
-    background-color: #e0e0e0;
-    color: #000000;
 }
+
+.message.bot {
+  background-color: #718096;
+  align-self: flex-start;
+}
+
