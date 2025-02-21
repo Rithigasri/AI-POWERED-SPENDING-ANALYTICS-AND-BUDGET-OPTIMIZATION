@@ -149,6 +149,13 @@ The AI-Powered Spending Analytics and Budget Optimization system successfully au
 This system enhances financial decision-making by offering personalized insights, spending pattern detection, and AI-driven recommendations. Graphical representations, such as spending breakdowns and savings trends, improve user experience. Future enhancements include predictive financial modeling, real-time bank API integration, advanced receipt scanning, and mobile application support, further expanding its usability for individuals, families, and businesses.
 
 ## REFERENCES
+[1]  Y. Bai, Y. Gao, R. Wan, S. Zhang, and R. Song, "A review of reinforcement learning in financial applications," arXiv preprint arXiv:2411.12746, Nov. 2024.https://arxiv.org/abs/2411.12746?utm_source=chatgpt.com
+[2] S. K. Gorai and A. Maurya, "Artificial intelligence in personal finance management: Opportunities and challenges," IOSR J. Comput. Eng., vol. 27, no. 1, pp. 7–17,2025,https://www.iosrjournals.org/iosr-jce/papers/Vol27-issue1/Ser-1/B2701010717.pdf?utm_source=chatgpt.com
+[3] N. R. Tadapaneni, "Artificial intelligence in finance and investments," Int. J. Res. Eng. Sci., vol. 9, no. 6, pp. 45–52, 2021.
+[4] A. Al Masarweh, K. Y. Aram, and Y. S. Alhaj-Yaseen, "Identifying new earnings management components: A machine learning approach," Int. J. Financ. Res., vol. 12, no. 3, pp. 123–135, 2021.
+[5] A. E. Khandani, A. J. Kim, and A. W. Lo, "Consumer credit-risk models via machine-learning algorithms," J. Bank. Finance, vol. 34, no. 11, pp. 2767–2787, Nov. 2010.
+[6] Y. Zhao, "Construction of budget management system based on financial risk prevention," Adv. Econ. Bus. Manag. Res., vol. 120, pp. 123–128, 2020.
+[7] B. Huang and J. Wei, "Research on deep learning-based financial risk prediction," J. Phys. Conf. Ser., vol. 1237, no. 2, pp. 1–6, 2019.
 
 
 
