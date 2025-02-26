@@ -126,21 +126,23 @@ By automating financial data extraction and analysis, the system empowers users 
 ![WhatsApp Image 2025-02-20 at 1 25 42 PM](https://github.com/user-attachments/assets/9e4c9a18-ffc1-46d7-b69b-7a9d484431f7)
 
 ## OUTPUT
-#### Output 1 - Extracting Receipt Details 
-![WhatsApp Image 2025-02-20 at 10 14 14 PM](https://github.com/user-attachments/assets/721026a3-3b40-4b18-b74a-a81439237397)
+### Output 1 - Upload Monthly Statement
+![image](https://github.com/user-attachments/assets/cc3b721c-bed6-4f93-b20b-fceaec685f06)
 
-#### Output 2 - Categorize Transactions
-![WhatsApp Image 2025-02-20 at 10 14 14 PM (3)](https://github.com/user-attachments/assets/fd888a5b-91ee-4c45-8d91-7f98a7d97cd5)
+#### Output 2 - Extracting Receipt Details 
+![image](https://github.com/user-attachments/assets/8bc53fb9-e828-4b3f-a6a4-be3915d482a6)
 
-#### Output 3 -  Saving Vs Expenses Chart
-![WhatsApp Image 2025-02-20 at 10 14 14 PM (2)](https://github.com/user-attachments/assets/8d20fb5d-48e9-4810-a0db-e03d60269593)
+#### Output 3 - Categorize Transactions
+![image](https://github.com/user-attachments/assets/adf802b3-e8bc-4a8f-8be7-7d231f8f5eab)
 
-#### Output 4 -  Personal Finance Advisor
-![WhatsApp Image 2025-02-20 at 10 14 14 PM (1)](https://github.com/user-attachments/assets/477bcabc-6d5f-4a9c-9fdd-71843b1f78fd)
+#### Output 4 -  Saving Vs Expenses Chart
+![image](https://github.com/user-attachments/assets/35e6d81b-947c-4d9a-a9fc-692dfc3c2168)
 
-#### Output 5 -  Insights Provider
-![WhatsApp Image 2025-02-20 at 10 14 13 PM](https://github.com/user-attachments/assets/960a9160-5c7e-4a9c-86ec-19b577181b94)
+#### Output 5 -  Personal Finance Advisor
+![image](https://github.com/user-attachments/assets/d9953260-5a20-45ea-a8c6-dcb2e212fa8a)
 
+#### Output 6 -  Insights Provider
+![image](https://github.com/user-attachments/assets/ccd3b0ce-7684-49d8-a723-794cb099a478)
 
 ## RESULTS 
 The AI-Powered Spending Analytics and Budget Optimization system successfully automates financial tracking through AI-driven transaction classification, automated data extraction, and interactive chatbot capabilities. It integrates Azure Form Recognizer, Azure OpenAI (GPT-4), and Google Gemini API to ensure accurate processing of financial data. With modular components for PDF processing, receipt analysis, financial insights, and chatbot interactions, the system provides a scalable and efficient solution for personal finance management.
