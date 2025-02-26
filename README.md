@@ -126,7 +126,7 @@ By automating financial data extraction and analysis, the system empowers users 
 ![WhatsApp Image 2025-02-20 at 1 25 42 PM](https://github.com/user-attachments/assets/9e4c9a18-ffc1-46d7-b69b-7a9d484431f7)
 
 ## OUTPUT
-### Output 1 - Upload Monthly Statement
+#### Output 1 - Upload Monthly Statement
 ![image](https://github.com/user-attachments/assets/cc3b721c-bed6-4f93-b20b-fceaec685f06)
 
 #### Output 2 - Extracting Receipt Details 
