@@ -3,7 +3,7 @@
 To develop an AI-powered financial analytics system that automates expense tracking, transaction classification, and budget optimization using Azure Form Recognizer, GPT-4, and Google Gemini API.
 
 ## ABOUT
-AI-Powered Spending Analytics and Budget Optimization is an intelligent financial management system designed to automate expense tracking, transaction classification, and budget analysis. It extracts and processes transaction data from bank statements and receipts using Azure Form Recognizer, converting them into structured CSV files. The system leverages GPT-4 for transaction classification and Google Gemini API for AI-driven financial recommendations and queries.
+AI-Powered Spending Analytics and Budget Optimization is an intelligent financial management system designed for automating expense tracking, transaction classification, and budget analysis. It extracts and processes transaction data from bank statements and receipts using Azure Form Recognizer, converting them into structured CSV files. The system leverages GPT-4 for transaction classification and Google Gemini API for AI-driven financial recommendations and queries.
 
 The platform visualizes spending patterns through interactive charts, such as bar graphs and savings reports, allowing users to gain insights into their financial habits. It also supports real-time transaction updates by analyzing receipts and historical spending trends. Built with FastAPI, it integrates Azure SDKs, Pandas, and other Python libraries for efficient data processing and scalability.
 
